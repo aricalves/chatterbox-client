@@ -12,7 +12,7 @@ let app = {
 $('document').ready(function() {
 
   app.init = function() {
-    app.fetch();
+    app.fetch(app.currentRoom);
     app.renderRoom();
   };
 
@@ -64,22 +64,34 @@ $('document').ready(function() {
 
   app.renderMessage = function(messageData, user, text) {
     messageData = messageData || {};
-    $('#chats').
-      append(
-        `<div class='message'>
-          <span class='username'>${user || app.sanitize(messageData.username)}:</span>
-          <span class='text'>${text || app.sanitize(messageData.text)}</span>
-        </div>`);  
+    
+    if (app.friends.includes(messageData.username)) {
+      $('#chats').
+        append(
+          `<div class='message'>
+            <bold><span class='username'>${user || app.sanitize(messageData.username)}</span></bold>
+            <span class='text'>${text || app.sanitize(messageData.text)}</span>
+          </div>`);
+    } else {
+      $('#chats').
+        append(
+          `<div class='message'>
+            <span class='username'>${user || app.sanitize(messageData.username)}</span>
+            <span class='text'>${text || app.sanitize(messageData.text)}</span>
+          </div>`);
+    }
   };
 
   app.renderRoom = function(rooms) {
     _.each(rooms, room => {
-      $('#roomSelect').append(`<option>${room}</option>`);
+      $('#roomSelect').append(`<span>${room}</span>`);
     });
   };
 
   app.handleUsernameClick = function(user) {
-    app.friends.push(user);
+    app.friends.push(user.currentTarget.childNodes[0].data);
+    app.clearMessages();
+    app.fetch();
     console.log('username: ', user.currentTarget.childNodes[0].data);
   };
 
@@ -94,6 +106,7 @@ $('document').ready(function() {
   
   app.createRoom = function() {
     let newRoom = prompt('What is the name of your new room?');
+    app.currentRoom = newRoom;
     app.renderRoom([newRoom]);
     app.enterRoom(newRoom);
   };
@@ -109,11 +122,10 @@ $('document').ready(function() {
   };
 
 
-  app.init();
 
   $('#chats').on('click',
     '.username',
-    {user: $('#chats .username').currentTarget},
+    {user: $('#chats .username').val()},
     app.handleUsernameClick
   );
 
@@ -129,11 +141,20 @@ $('document').ready(function() {
     app.handleSubmit(JSON.stringify(msg));
   });
   
+  
+  
 
   
   $('#rooms').on('click', '#roomMaker', app.createRoom);
   
+  $(document).on('click', '#roomSelect', () => {
+    
+    console.log(room);
+    app.enterRoom.bind(room);
+  });
+  
 
+  app.init();
   
 });
 
