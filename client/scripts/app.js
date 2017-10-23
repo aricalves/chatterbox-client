@@ -5,7 +5,7 @@ let app = {
   messages: [],
   user: window.location.search.slice(10),
   server: 'http://parse.sfs.hackreactor.com/chatterbox/classes/messages',
-  currentRoom: 'lobby'
+  currentRoom: undefined
   
 };
 
@@ -13,19 +13,19 @@ $('document').ready(function() {
 
   app.init = function() {
     app.fetch(app.currentRoom);
-    app.renderRoom();
   };
 
 
   app.send = function(message) {
+    console.log(message)
     $.ajax({
       url: this.server,
       type: 'POST',
-      data: message,
+      data: JSON.stringify(message),
       contentType: 'application/json',
       success: function (data) {
         console.log('chatterbox: Message sent');
-        app.fetch(app.currentRoom);
+        //app.fetch(app.currentRoom);
       },
       error: function (data) {
         console.error('chatterbox: Failed to send message', data);
@@ -91,8 +91,7 @@ $('document').ready(function() {
   app.handleUsernameClick = function(user) {
     app.friends.push(user.currentTarget.childNodes[0].data);
     app.clearMessages();
-    app.fetch();
-    console.log('username: ', user.currentTarget.childNodes[0].data);
+    app.fetch(app.currentRoom);
   };
 
   app.handleSubmit = function(message) {
@@ -100,11 +99,12 @@ $('document').ready(function() {
   };
 
   app.sanitize = function(text) {
-    text = text || 'covfefe';
-    return text.replace(/[<>{}``/\.()&=]/g, ' ');
+    text = text || 'giraffe';
+    return text.replace(/[<>{}/\.()&=]/g, '_');
   };
   
   app.createRoom = function() {
+
     let newRoom = prompt('What is the name of your new room?');
     app.currentRoom = newRoom;
     app.renderRoom([newRoom]);
@@ -130,15 +130,21 @@ $('document').ready(function() {
   );
 
 
-  $(document).on('submit', '#send', () => {
+
+
+  $('#main').on('submit', '#send', () => {
+
     let msgText = $('input[name="message"]').val();
+
     let msg = {
       username: app.user,
       text: msgText,
       createdAt: new Date(),
       roomname: app.currentRoom
     };
-    app.handleSubmit(JSON.stringify(msg));
+
+    app.handleSubmit(msg);
+
   });
   
   
@@ -147,9 +153,9 @@ $('document').ready(function() {
   
   $('#rooms').on('click', '#roomMaker', app.createRoom);
   
+
+
   $(document).on('click', '#roomSelect', () => {
-    
-    console.log(room);
     app.enterRoom.bind(room);
   });
   
